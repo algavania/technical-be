@@ -196,7 +196,7 @@ class AuthController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'email' => 'required|email|exists:users,email',
-            'token' => 'required',
+            'token' => 'required|string',
             'password' => 'required|string|min:8|confirmed',
         ]);
 
@@ -210,7 +210,7 @@ class AuthController extends Controller
             );
         }
 
-        // Reset the password
+        // Reset the password using the provided token
         $status = Password::reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function (User $user, string $password) {
@@ -220,6 +220,7 @@ class AuthController extends Controller
             }
         );
 
+        // Check if the password was successfully reset
         if ($status === Password::PASSWORD_RESET) {
             return ResponseHelper::createResponse(
                 true,
@@ -229,7 +230,13 @@ class AuthController extends Controller
                 200
             );
         } else {
-            throw new \Exception('Password reset failed.', 500);
+            return ResponseHelper::createResponse(
+                false,
+                'Password reset failed. The token may be invalid or expired.',
+                null,
+                null,
+                400
+            );
         }
     }
 }
