@@ -23,6 +23,7 @@ class User extends Authenticatable
         'email',
         'password',
         'image_path',
+        'refresh_token',
     ];
 
     protected $appends = [
@@ -38,6 +39,7 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'refresh_token',
     ];
 
     /**

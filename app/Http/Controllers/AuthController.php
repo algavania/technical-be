@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -66,6 +67,9 @@ class AuthController extends Controller
         if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
             $user = Auth::user();
             $token = $user->createToken('API Token')->plainTextToken;
+            $refreshToken = Str::random(60);
+            $user->refresh_token = $refreshToken;
+            $user->save();
 
             return ResponseHelper::createResponse(
                 true,
@@ -73,6 +77,7 @@ class AuthController extends Controller
                 [
                     'user' => $user,
                     'token' => $token,
+                    'refresh_token' => $refreshToken,
                 ],
                 null,
                 200
@@ -85,6 +90,52 @@ class AuthController extends Controller
         }
 
         throw new \Exception('User not found.', 404);
+    }
+
+    public function refreshToken(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'refresh_token' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return ResponseHelper::createResponse(
+                false,
+                'Validation failed',
+                null,
+                $validator->errors(),
+                400
+            );
+        }
+
+        $user = User::where('refresh_token', $request->refresh_token)->first();
+
+        if (!$user) {
+            return ResponseHelper::createResponse(
+                false,
+                'The refresh token is invalid or expired',
+                null,
+                null,
+                401
+            );
+        }
+
+        $accessToken = $user->createToken('API Token')->plainTextToken;
+        $newRefreshToken = Str::random(60);
+
+        $user->refresh_token = $newRefreshToken;
+        $user->save();
+
+        return ResponseHelper::createResponse(
+            true,
+            'Token refreshed successfully',
+            [
+                'token' => $accessToken,
+                'refresh_token' => $newRefreshToken,
+            ],
+            null,
+            200
+        );
     }
 
     public function logout(Request $request)
