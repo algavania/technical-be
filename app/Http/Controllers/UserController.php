@@ -80,6 +80,7 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
+        // From query param
         $search = $request->query('search', '');
         $limit = $request->query('limit', 10);
         $users = User::when($search, function ($query, $search) {
