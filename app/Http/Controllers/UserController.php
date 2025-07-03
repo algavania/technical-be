@@ -80,13 +80,8 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
-        $request->validate([
-            'search' => 'nullable|string|max:255',
-            'limit' => 'nullable|integer|min:1|max:100',
-        ]);
-
-        $search = $request->input('search', '');
-        $limit = $request->input('limit', 15);
+        $search = $request->query('search', '');
+        $limit = $request->query('limit', 10);
         $users = User::when($search, function ($query, $search) {
             return $query->where('name', 'like', '%' . $search . '%')
                          ->orWhere('email', 'like', '%' . $search . '%');
