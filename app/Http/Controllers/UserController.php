@@ -1,8 +1,9 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Helpers\ResponseHelper;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -17,31 +18,29 @@ class UserController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request)
     {
-        if (Auth::check() && Auth::user()->id !== (int)$id) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+        if (!Auth::check()) {
+            throw new Exception('Unauthorized', 401);
         }
 
-        $user = User::findOrFail($id);
+        $user = User::find(Auth::id());
+        if (!$user) {
+            throw new Exception('User not found', 404);
+        }
 
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
-            'password' => 'nullable|string|min:8|confirmed',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 400);
+            return ResponseHelper::createResponse(false, 'Validation failed', null, $validator->errors(), 400);
         }
 
         $user->name = $request->name;
         $user->email = $request->email;
-
-        if ($request->filled('password')) {
-            $user->password = bcrypt($request->password);
-        }
 
         if ($request->hasFile('image')) {
             if ($user->image_path && Storage::exists('public/' . $user->image_path)) {
@@ -54,10 +53,7 @@ class UserController extends Controller
 
         $user->save();
 
-        return response()->json([
-            'message' => 'User updated successfully.',
-            'user' => $user,
-        ]);
+        return ResponseHelper::createResponse(true, 'User updated successfully', $user);
     }
 
     /**
@@ -68,8 +64,12 @@ class UserController extends Controller
      */
     public function show($id)
     {
-        $user = User::findOrFail($id);
-        return response()->json($user);
+
+        $user = User::find($id);
+        if (!$user) {
+            throw new Exception('User not found', 404);
+        }
+        return ResponseHelper::createResponse(true, 'User fetched successfully', $user);
     }
 
     /**
@@ -92,7 +92,8 @@ class UserController extends Controller
                          ->orWhere('email', 'like', '%' . $search . '%');
         })
         ->paginate($limit); 
-        return response()->json($users);
+
+        return ResponseHelper::createResponse(true, 'Users fetched successfully', $users);
     }
 
     /**
@@ -104,7 +105,9 @@ class UserController extends Controller
     {
         if (Auth::check()) {
             $user = Auth::user();
-            return response()->json($user);
+            return ResponseHelper::createResponse(true, 'Authenticated user info', $user);
         }
+
+        return ResponseHelper::createResponse(false, 'Unauthorized', null, ['message' => 'You are not authenticated'], 401);
     }
 }

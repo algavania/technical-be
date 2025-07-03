@@ -14,7 +14,7 @@ Route::prefix('auth')->group(function () {
 
 Route::middleware('auth:sanctum')->prefix('user')->group(function () {
     Route::get('/me', [UserController::class, 'me']);
+    Route::post('/', [UserController::class, 'update']);
     Route::get('/{id}', [UserController::class, 'show']);
-    Route::put('/{id}', [UserController::class, 'update']);
     Route::get('/', [UserController::class, 'index']);
 });

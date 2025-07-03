@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ResponseHelper;
 use App\Models\User;
 use App\Notifications\CustomPasswordReset;
 use Illuminate\Http\Request;
@@ -21,7 +22,13 @@ class AuthController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 400);
+            return ResponseHelper::createResponse(
+                false,
+                'Validation failed',
+                null,
+                $validator->errors(),
+                400
+            );
         }
 
         $user = User::create([
@@ -30,10 +37,13 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        return response()->json([
-            'message' => 'User registered successfully.',
-            'user' => $user
-        ], 201);
+        return ResponseHelper::createResponse(
+            true,
+            'User registered successfully',
+            $user,
+            null,
+            201
+        );
     }
 
     public function login(Request $request)
@@ -44,26 +54,37 @@ class AuthController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 400);
+            return ResponseHelper::createResponse(
+                false,
+                'Validation failed',
+                null,
+                $validator->errors(),
+                400
+            );
         }
 
         if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
             $user = Auth::user();
             $token = $user->createToken('API Token')->plainTextToken;
 
-            return response()->json([
-                'message' => 'Login successful.',
-                'token' => $token,
-                'user' => $user
-            ]);
+            return ResponseHelper::createResponse(
+                true,
+                'Login successful',
+                [
+                    'user' => $user,
+                    'token' => $token,
+                ],
+                null,
+                200
+            );
         }
 
         // Add invalid credentials response
         if (User::where('email', $request->email)->exists()) {
-            return response()->json(['message' => 'Invalid password.'], 401);
+            throw new \Exception('Invalid password.', 401);
         }
 
-        return response()->json(['message' => 'User not found.'], 404);
+        throw new \Exception('User not found.', 404);
     }
 
     public function logout(Request $request)
@@ -73,10 +94,16 @@ class AuthController extends Controller
                 $token->delete();
             });
 
-            return response()->json(['message' => 'Logged out successfully.']);
+            return ResponseHelper::createResponse(
+                true,
+                'Logout successful',
+                null,
+                null,
+                200
+            );
         }
 
-        return response()->json(['message' => 'Not logged in.'], 401);
+        throw new \Exception('You are not logged in.', 401);
     }
 
     public function sendResetLinkEmail(Request $request)
@@ -87,7 +114,13 @@ class AuthController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 400);
+            return ResponseHelper::createResponse(
+                false,
+                'Validation failed',
+                null,
+                $validator->errors(),
+                400
+            );
         }
 
         // Retrieve user
@@ -99,7 +132,13 @@ class AuthController extends Controller
         // Send the custom password reset notification
         $user->notify(new CustomPasswordReset($token));
 
-        return response()->json(['message' => 'Password reset link sent.']);
+        return ResponseHelper::createResponse(
+            true,
+            'Password reset link sent successfully.',
+            null,
+            null,
+            200
+        );
     }
 
     public function resetPassword(Request $request)
@@ -111,7 +150,13 @@ class AuthController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 400);
+            return ResponseHelper::createResponse(
+                false,
+                'Validation failed',
+                null,
+                $validator->errors(),
+                400
+            );
         }
 
         // Reset the password
@@ -124,8 +169,16 @@ class AuthController extends Controller
             }
         );
 
-        return $status == Password::PASSWORD_RESET
-            ? response()->json(['message' => 'Password reset successfully.'])
-            : response()->json(['message' => 'Invalid token or user.'], 400);
+        if ($status === Password::PASSWORD_RESET) {
+            return ResponseHelper::createResponse(
+                true,
+                'Password reset successfully.',
+                null,
+                null,
+                200
+            );
+        } else {
+            throw new \Exception('Password reset failed.', 500);
+        }
     }
 }

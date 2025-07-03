@@ -1,5 +1,7 @@
 <?php
 
+use App\Helpers\ResponseHelper;
+use App\Http\Middleware\GlobalErrorHandler;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -15,11 +17,26 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->group('api', [
+            GlobalErrorHandler::class,
             EnsureFrontendRequestsAreStateful::class,
             'throttle:api',
             SubstituteBindings::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (Throwable $e, $request) {
+            $httpCode = $e->getCode() ?: 500;
+            // check if http code is valid
+            if ($httpCode < 100 || $httpCode >= 600) {
+                $httpCode = 500;
+            }
+
+            return ResponseHelper::createResponse(
+                false,
+                $e->getMessage() ?? 'An unexpected error occurred',
+                null,
+                null,
+                $httpCode
+            );
+        });
     })->create();
