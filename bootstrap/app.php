@@ -25,6 +25,9 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (Throwable $e, $request) {
+            // if path not api, return default error page
+            
+
             $httpCode = $e->getCode() ?: 500;
             // check if http code is valid
             if ($httpCode < 100 || $httpCode >= 600) {

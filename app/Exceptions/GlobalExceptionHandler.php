@@ -33,6 +33,10 @@ class GlobalExceptionHandler extends ExceptionHandler
      */
     public function render($request, Throwable $exception)
     {
+        // If path is not api, return default error page
+        if (!$request->is('api/*')) {
+            return parent::render($request, $exception);
+        }
         // Handling ModelNotFoundException
         if ($exception instanceof ModelNotFoundException) {
             // Log and return a JSON response for ModelNotFoundException
