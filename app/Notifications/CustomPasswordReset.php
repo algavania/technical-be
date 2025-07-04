@@ -35,11 +35,11 @@ class CustomPasswordReset extends Notification
      */
     public function toMail($notifiable)
     {
-        $appLink = "technical://reset-password?token=" . $this->token;
+        $resetUrl = url('password/reset?token='.$this->token);
         return (new MailMessage)
             ->subject('Password Reset Request')
             ->line('We received a request to reset your password.')
-            ->action('Reset Password', $appLink)
+            ->action('Reset Password', $resetUrl)
             ->line('If you did not request a password reset, no further action is required.');
     }
 

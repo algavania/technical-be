@@ -13,6 +13,8 @@ class ResetPasswordController extends Controller
     // Display the password reset form
     public function showResetForm($token)
     {
+        // token is from query param
+        $token = request()->query('token');
         return view('auth.passwords.reset', ['token' => $token]);
     }
 

@@ -7,6 +7,6 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/password/reset/{token}', [ResetPasswordController::class, 'showResetForm'])->name('password.reset');
+Route::get('/password/reset', [ResetPasswordController::class, 'showResetForm'])->name('password.reset');
 
 Route::post('/password/reset', [ResetPasswordController::class, 'resetPassword'])->name('password.update');
