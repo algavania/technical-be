@@ -89,6 +89,7 @@ class UserController extends Controller
             return $query->where('name', 'like', '%' . $search . '%')
                          ->orWhere('email', 'like', '%' . $search . '%');
         })
+        ->orderBy('created_at', 'desc')
         ->paginate($limit); 
 
         return ResponseHelper::createResponse(true, 'Users fetched successfully', $users);
