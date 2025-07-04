@@ -11,6 +11,7 @@ Route::prefix('auth')->group(function () {
     Route::post('/reset-password', [AuthController::class, 'resetPassword']);
     Route::post('/refresh-token', [AuthController::class, 'refreshToken']);
     Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
+    Route::middleware('auth:sanctum')->post('/update-password', [AuthController::class, 'updatePassword']);
 });
 
 Route::middleware('auth:sanctum')->prefix('user')->group(function () {

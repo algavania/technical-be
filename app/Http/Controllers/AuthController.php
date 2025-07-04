@@ -157,6 +157,47 @@ class AuthController extends Controller
         throw new \Exception('You are not logged in.', 401);
     }
 
+    public function updatePassword(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'current_password' => 'required|string|min:8',
+            'new_password' => 'required|string|min:8|confirmed',
+        ]);
+
+        if ($validator->fails()) {
+            return ResponseHelper::createResponse(
+                false,
+                'Validation failed',
+                null,
+                $validator->errors(),
+                400
+            );
+        }
+
+        $user = Auth::user();
+
+        if (!Hash::check($request->current_password, $user->password)) {
+            return ResponseHelper::createResponse(
+                false,
+                'Current password is incorrect',
+                null,
+                null,
+                401
+            );
+        }
+
+        $user->password = Hash::make($request->new_password);
+        $user->save();
+
+        return ResponseHelper::createResponse(
+            true,
+            'Password updated successfully',
+            null,
+            null,
+            200
+        );
+    }
+
     public function sendResetLinkEmail(Request $request)
     {
         // Validate email

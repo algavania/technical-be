@@ -33,6 +33,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'description' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -41,6 +42,7 @@ class UserController extends Controller
 
         $user->name = $request->name;
         $user->email = $request->email;
+        $user->description = $request->description;
 
         if ($request->hasFile('image')) {
             if ($user->image_path && Storage::exists('public/' . $user->image_path)) {
