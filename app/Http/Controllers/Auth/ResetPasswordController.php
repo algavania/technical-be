@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Validator;
 class ResetPasswordController extends Controller
 {
     // Display the password reset form
-    public function showResetForm($token)
+    public function showResetForm()
     {
         // token is from query param
         $token = request()->query('token');
